@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:ausadhimate/main.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -17,9 +20,8 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-          onNotificationTap(); // Calls updateAlarm()
-        if (response.payload == "alarm_trigger") {
-        }
+        onNotificationTap(); // Calls updateAlarm()
+        if (response.payload == "alarm_trigger") {}
       },
     );
 
@@ -65,6 +67,13 @@ class NotificationService {
         androidScheduleMode:
             AndroidScheduleMode.exact, // ✅ Correct way to allow Doze Mode
       );
+      final Duration delay = scheduledTime.difference(DateTime.now());
+      Timer(delay, () {
+        print("Triggering updateAlarm() at scheduled time: $scheduledTime");
+        updateAlarm();
+      });
+
+      
       print("Notification Scheduled at: $scheduledTime");
     } catch (e) {
       print("Error scheduling notification: $e");
