@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "624989594641",
+    "firebase_url": "https://aushadimatedatabase-5f1c3-default-rtdb.firebaseio.com",
+    "project_id": "aushadimatedatabase-5f1c3",
+    "storage_bucket": "aushadimatedatabase-5f1c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624989594641:android:84a89126cc7932c5a8fdb0",
+        "android_client_info": {
+          "package_name": "com.example.ausadhimate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtScPPqxp9uNHoWebEPC_GGaJgmsvuVnw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
