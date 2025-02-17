@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_alert),
-            onPressed: updateAlarm,
+            onPressed: updateAlarmToZero,
           ),
           IconButton(
             icon: const Icon(Icons.add),
@@ -117,6 +117,16 @@ class _HomePageState extends State<HomePage> {
   void updateAlarm() {
     print("object");
     ref.child("alarm").set(1).then((_) {
+      print("Alarm updated successfully!");
+      setState(() {}); // To refresh the UI
+    }).catchError((error) {
+      print("Failed to update alarm: $error");
+    });
+  }
+  
+  void updateAlarmToZero() {
+    print("object");
+    ref.child("alarm").set(0).then((_) {
       print("Alarm updated successfully!");
       setState(() {}); // To refresh the UI
     }).catchError((error) {

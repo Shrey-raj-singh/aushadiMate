@@ -17,8 +17,8 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload == "alarm_trigger") {
           onNotificationTap(); // Calls updateAlarm()
+        if (response.payload == "alarm_trigger") {
         }
       },
     );

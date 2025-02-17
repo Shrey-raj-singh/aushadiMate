@@ -1,17 +1,19 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import 'Pages/HomePage.dart';
 import 'api/firebase_api.dart';
 import 'services/notificationService.dart';
 
+final DatabaseReference ref = FirebaseDatabase.instance.ref();
 void main() async {
-   WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   // await NotificationService.initialize();
   await Firebase.initializeApp();
   await FirebaseApi().initNotification();
-    await NotificationService.initialize(() {
-    // updateAlarm(); // Call updateAlarm() when notification triggers
+  await NotificationService.initialize(() {
+    updateAlarm(); // Call updateAlarm() when notification triggers
   });
   // await LocalNotifications.init();
 
@@ -27,6 +29,16 @@ void main() async {
   //   });
   // }
   runApp(const MyApp());
+}
+
+void updateAlarm() {
+  print("object");
+  ref.child("alarm").set(1).then((_) {
+    print("Alarm updated successfully!");
+    // setState(() {}); // To refresh the UI
+  }).catchError((error) {
+    print("Failed to update alarm: $error");
+  });
 }
 
 class MyApp extends StatelessWidget {
