@@ -1,14 +1,16 @@
 // ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables
 
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:ausadhimate/Models/Reminders.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notificationService.dart';
 import 'widgets/addReminderForm.dart';
+import 'widgets/gradientProfileBlock.dart';
+import 'widgets/reminderSlot.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.name});
@@ -20,9 +22,32 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool addReminder = false;
-  final DatabaseReference ref = FirebaseDatabase.instance.ref();
-
+  final DatabaseReference ref = FirebaseDatabase.instance.ref('/alarm');
+  DatabaseReference refer = FirebaseDatabase.instance.ref('/MedTaken');
+  Object? medTaken = 0;
   List<Reminders> reminders = List.empty(growable: true);
+
+  @override
+  void initState() {
+    super.initState();
+    loadMedTaken();
+    refer.onValue.listen((DatabaseEvent event) async {
+      final data = event.snapshot.value;
+      print("Fetched Data: $data");
+
+      if (data != null && medTaken != data) {
+        // Ensure data is not null before comparison
+        await NotificationService.showLocalNotification(
+            "Medicine Taken", "You have taken your medicine!");
+        setState(() {
+          medTaken = data; // Use setState to update UI
+        });
+        saveMedTakenValue(data);
+      }
+    });
+
+    loadReminders();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +86,41 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                gradientProfileWidget(),
-                TimeBlocks(
-                  timePeriod: 'Morning',
-                  reminderList: reminders,
-                ),
+                GradientProfileWidget(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Morning MedTaken: $medTaken",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: reminders.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onDoubleTap: () => onDeleteReminder(index),
+                            child: ReminderSlot(
+                                medicine: reminders[index].medicineName,
+                                time: reminders[index].time,
+                                medicineWeight: reminders[index].medicineWeight,
+                                status: reminders[index].status,
+                                rackNumber: reminders[index].rackNumber),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),
@@ -106,43 +161,72 @@ class _HomePageState extends State<HomePage> {
 
 // Only update the name, leave the age and address!
 
-  // void updateAlarm() {
-  //   ref.update({"alarm": 1}).then((_) {
-  //     print("Alarm updated successfully!");
-  //   }).catchError((error) {
-  //     print("Failed to update alarm: $error");
-  //   });
-  // }
+  Future<void> loadReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? remindersString = prefs.getString('reminders');
 
-  void updateAlarm() {
-    print("object");
-    ref.child("alarm").set(1).then((_) {
-      print("Alarm updated successfully!");
-      setState(() {}); // To refresh the UI
-    }).catchError((error) {
-      print("Failed to update alarm: $error");
+    if (remindersString != null) {
+      final List<dynamic> decodedList = json.decode(remindersString);
+      setState(() {
+        reminders =
+            decodedList.map((item) => Reminders.fromJson(item)).toList();
+      });
+    }
+  }
+
+  Future<void> saveReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encodedReminders =
+        json.encode(reminders.map((r) => r.toJson()).toList());
+    await prefs.setString('reminders', encodedReminders);
+  }
+
+  Future<void> loadMedTaken() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      medTaken =
+          prefs.getInt("medTaken") ?? 0; // Default to 0 if no data exists
     });
   }
-  
-  void updateAlarmToZero() {
-    print("object");
-    ref.child("alarm").set(0).then((_) {
-      print("Alarm updated successfully!");
+
+  Future<void> saveMedTakenValue(Object? value) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (value is int) {
+      await prefs.setInt("medTaken", value);
+    } else if (value is String) {
+      await prefs.setString("medTaken", value);
+    } else if (value is bool) {
+      await prefs.setBool("medTaken", value);
+    }
+  }
+
+  void updateAlarm() {
+    ref.child("alarm").set(1).then((_) {
       setState(() {}); // To refresh the UI
-    }).catchError((error) {
-      print("Failed to update alarm: $error");
-    });
+    }).catchError((error) {});
+  }
+
+  void updateAlarmToZero() {
+    print("called");
+    ref.child("alarm").set(0).then((_) {
+      print("executed");
+      setState(() {}); // To refresh the UI
+    }).catchError((error) {});
   }
 
   void onNewReminderSetUp(Reminders reminder) {
-    reminders.add(reminder);
+    setState(() {
+      reminders.add(reminder);
+    });
+    saveReminders(); // Save updated reminders list
     setReminder(reminder.time);
-    setState(() {});
   }
 
   void onDeleteReminder(int index) {
-    reminders.removeAt(index);
-    setState(() {});
+    setState(() {
+      reminders.removeAt(index);
+    });
+    saveReminders();
   }
 
   void setReminder(DateTime reminderTime) {
@@ -152,209 +236,5 @@ class _HomePageState extends State<HomePage> {
       "It's time for your scheduled task!",
       reminderTime,
     );
-  }
-}
-
-class gradientProfileWidget extends StatelessWidget {
-  const gradientProfileWidget({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height / 5,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-      margin: EdgeInsets.only(bottom: 8),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFE2EEBE), Color(0xFFFFFFFF)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.black54,
-            width: 1,
-            style: BorderStyle.solid,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Hey there",
-            style: TextStyle(
-              fontSize: 32,
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Text(
-            "Ayush",
-            style: TextStyle(
-              fontSize: 32,
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await NotificationService.showTestNotification();
-            },
-            child: const Text('Test Notification'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TimeBlocks extends StatelessWidget {
-  const TimeBlocks({
-    super.key,
-    required this.timePeriod,
-    required this.reminderList,
-  });
-  final String timePeriod;
-  final List<Reminders> reminderList;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            timePeriod,
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: reminderList.length,
-            itemBuilder: (context, index) {
-              return MedicineSlot(
-                  medicine: reminderList[index].medicineName,
-                  time: reminderList[index].time,
-                  medicineWeight: reminderList[index].medicineWeight,
-                  status: reminderList[index].status,
-                  rackNumber: reminderList[index].rackNumber);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MedicineSlot extends StatelessWidget {
-  const MedicineSlot({
-    super.key,
-    required this.medicine,
-    required this.time,
-    required this.medicineWeight,
-    required this.status,
-    required this.rackNumber,
-  });
-
-  final String medicine;
-  final DateTime time;
-  // final String time;
-  final int medicineWeight;
-  final String status;
-  final int rackNumber;
-
-  @override
-  Widget build(BuildContext context) {
-    // Parse and format time correctly
-    String formattedTime = _formatTime(time);
-    // Triggers in 10 seconds
-
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      margin: EdgeInsets.symmetric(vertical: 4),
-      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      height: 92,
-      decoration: BoxDecoration(
-          color: const Color(0xFF7be8c9),
-          borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                medicine,
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                formattedTime, // ✅ Display only HH:mm
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              )
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                "${medicineWeight} mg",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(width: 20),
-              Icon(Icons.av_timer_sharp),
-              Text(
-                status,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Spacer(),
-              Text(
-                "Rack ${rackNumber}",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Function to format time
-  String _formatTime(DateTime time) {
-    try {
-      // DateTime dateTime = DateTime.parse(time);
-      return DateFormat.jm().format(time); // Outputs like "08:30 AM"
-    } catch (e) {
-      return "error"; // Fallback if parsing fails
-    }
   }
 }

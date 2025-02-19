@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <application
-        android:label="chatapp"
+        android:label="Aushadi Mate"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

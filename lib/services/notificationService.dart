@@ -80,16 +80,16 @@ class NotificationService {
     }
   }
 
-  static Future<void> showTestNotification() async {
+  static Future<void> showLocalNotification(String title,String body) async {
     await _notificationsPlugin.show(
       0,
-      'Test Notification',
-      'This is a test notification',
+      title,
+      body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'test_channel',
-          'Test Notifications',
-          channelDescription: 'For testing purposes',
+          'reminder_channel',
+          'Reminder Notifications',
+          channelDescription: 'For Reminder',
           importance: Importance.high,
           priority: Priority.high,
         ),
