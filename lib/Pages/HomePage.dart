@@ -7,6 +7,8 @@ import 'package:ausadhimate/Models/Reminders.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
+import '../main.dart';
 import '../services/notificationService.dart';
 import 'widgets/addReminderForm.dart';
 import 'widgets/gradientProfileBlock.dart';
@@ -22,7 +24,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool addReminder = false;
-  final DatabaseReference ref = FirebaseDatabase.instance.ref('/alarm');
+  final DatabaseReference ref = FirebaseDatabase.instance.ref();
   DatabaseReference refer = FirebaseDatabase.instance.ref('/MedTaken');
   Object? medTaken = 0;
   List<Reminders> reminders = List.empty(growable: true);
@@ -47,6 +49,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     loadReminders();
+    // scheduleBackgroundTask();
   }
 
   @override
@@ -207,34 +210,75 @@ class _HomePageState extends State<HomePage> {
   }
 
   void updateAlarmToZero() {
-    print("called");
     ref.child("alarm").set(0).then((_) {
-      print("executed");
       setState(() {}); // To refresh the UI
     }).catchError((error) {});
   }
 
   void onNewReminderSetUp(Reminders reminder) {
+    int uniqueNotificationId = DateTime.now()
+        .millisecondsSinceEpoch
+        .remainder(100000); // Generate a unique ID
+
+    reminder.notificationId = uniqueNotificationId; // Assign the ID
+    print(reminder);
     setState(() {
       reminders.add(reminder);
     });
     saveReminders(); // Save updated reminders list
-    setReminder(reminder.time);
+
+    setReminder(reminder.time,
+        uniqueNotificationId); // Pass the ID to schedule the notification
   }
 
   void onDeleteReminder(int index) {
-    setState(() {
-      reminders.removeAt(index);
-    });
-    saveReminders();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Delete Reminder?"),
+        content: Text("Are you sure you want to delete this reminder?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Cancel
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              int notificationId =
+                  reminders[index].notificationId; // Get the notification ID
+
+              NotificationService.cancelNotification(
+                  notificationId); // Cancel notification
+
+              setState(() {
+                reminders.removeAt(index);
+              });
+              saveReminders();
+
+              Navigator.pop(context); // Close the dialog
+            },
+            child: Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
-  void setReminder(DateTime reminderTime) {
+  void setReminder(DateTime reminderTime, int notificationId) {
     NotificationService.scheduleNotification(
-      1, // Unique ID for the notification
+      notificationId, // Use unique ID
       "Scheduled Reminder",
-      "It's time for your scheduled task!",
+      "It's time for your medicine!",
       reminderTime,
     );
   }
+
+  // void scheduleBackgroundTask() {
+  //   Workmanager().registerPeriodicTask(
+  //     "checkBackend",
+  //     checkBackendTask,
+  //     frequency: Duration(minutes: 15), // Minimum interval is 15 mins
+  //     existingWorkPolicy: ExistingWorkPolicy.replace,
+  //   );
+  // }
 }

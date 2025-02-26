@@ -1,37 +1,39 @@
 class Reminders {
   String medicineName;
-  int medicineWeight;
   DateTime time;
-  int rackNumber;
+  int notificationId; // Unique notification ID
+  int medicineWeight;
   String status;
+  int rackNumber;
 
   Reminders({
     required this.medicineName,
-    required this.medicineWeight,
     required this.time,
-    required this.rackNumber,
+    required this.notificationId, // Initialize in constructor
+    required this.medicineWeight,
     required this.status,
+    required this.rackNumber,
   });
 
-  // Convert Reminders object to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'medicineName': medicineName,
-      'medicineWeight': medicineWeight,
-      'time': time.toIso8601String(), // Store DateTime as a string
-      'rackNumber': rackNumber,
-      'status': status,
-    };
-  }
-
-  // Convert JSON to Reminders object
   factory Reminders.fromJson(Map<String, dynamic> json) {
     return Reminders(
       medicineName: json['medicineName'],
+      time: DateTime.parse(json['time']),
+      notificationId: json['notificationId'], // Load from JSON
       medicineWeight: json['medicineWeight'],
-      time: DateTime.parse(json['time']), // Convert string back to DateTime
-      rackNumber: json['rackNumber'],
       status: json['status'],
+      rackNumber: json['rackNumber'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'medicineName': medicineName,
+      'time': time.toIso8601String(),
+      'notificationId': notificationId, // Save in JSON
+      'medicineWeight': medicineWeight,
+      'status': status,
+      'rackNumber': rackNumber,
+    };
   }
 }

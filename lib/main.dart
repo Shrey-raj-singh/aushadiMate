@@ -1,41 +1,28 @@
+import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/material.dart';
-
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'Pages/HomePage.dart';
 import 'api/firebase_api.dart';
 import 'services/notificationService.dart';
 
 final DatabaseReference ref = FirebaseDatabase.instance.ref();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await NotificationService.initialize();
   await Firebase.initializeApp();
   await FirebaseApi().initNotification();
   await NotificationService.initialize(() {
-    updateAlarm(); // Call updateAlarm() when notification triggers
+    updateAlarm();
   });
-  // await LocalNotifications.init();
 
-//  handle in terminated state
-  // var initialNotification =
-  //     await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
-  // if (initialNotification?.didNotificationLaunchApp == true) {
-  //   // LocalNotifications.onClickNotification.stream.listen((event) {
-  //   Future.delayed(Duration(seconds: 1), () {
-  //     // print(event);
-  //     navigatorKey.currentState!.pushNamed('/another',
-  //         arguments: initialNotification?.notificationResponse?.payload);
-  //   });
-  // }
   runApp(const MyApp());
 }
 
 void updateAlarm() {
-  print("object");
+  print("Updating alarm...");
   ref.child("alarm").set(1).then((_) {
     print("Alarm updated successfully!");
-    // setState(() {}); // To refresh the UI
   }).catchError((error) {
     print("Failed to update alarm: $error");
   });
@@ -44,16 +31,54 @@ void updateAlarm() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return ForegroundTaskManager(
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const HomePage(name: 'Ayush'),
       ),
-      home: const HomePage(name: 'Ayush'),
     );
+  }
+}
+
+class ForegroundTaskManager extends StatefulWidget {
+  final Widget child;
+  const ForegroundTaskManager({Key? key, required this.child}) : super(key: key);
+
+  @override
+  _ForegroundTaskManagerState createState() => _ForegroundTaskManagerState();
+}
+
+class _ForegroundTaskManagerState extends State<ForegroundTaskManager> {
+  @override
+  void initState() {
+    super.initState();
+    _startForegroundService();
+  }
+
+  void _startForegroundService() {
+    FlutterForegroundTask.startService(
+      notificationTitle: "App Running in Background",
+      notificationText: "Maintaining Firebase Connection",
+      callback: () {
+        _listenToFirebase();
+      },
+    );
+  }
+
+  void _listenToFirebase() {
+    ref.child("medTaken").onValue.listen((event) {
+      print("New medTaken value: ${event.snapshot.value}");
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

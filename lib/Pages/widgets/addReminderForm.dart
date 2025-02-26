@@ -44,7 +44,7 @@ class _AddReminderDialogState extends State<AddReminderDialog> {
         _weightController.text.isEmpty ||
         _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill all fields before adding a reminder!")),
+        const SnackBar(content: Text("Please fill all fields before adding a reminder!")),
       );
       return;
     }
@@ -60,7 +60,7 @@ class _AddReminderDialogState extends State<AddReminderDialog> {
         _selectedTime!.minute,
       ),
       rackNumber: _selectedRackNumber,
-      status: "Pending",
+      status: "Pending", notificationId: 0,
     );
 
     widget.onAddReminder(newReminder);
@@ -72,25 +72,25 @@ class _AddReminderDialogState extends State<AddReminderDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Add Reminder", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const Text("Add Reminder", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             TextField(
               controller: _medicineController,
-              decoration: InputDecoration(labelText: "Medicine Name", border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: "Medicine Name", border: OutlineInputBorder()),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             TextField(
               controller: _weightController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Medicine Weight (mg)", border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: "Medicine Weight (mg)", border: OutlineInputBorder()),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             DropdownButtonFormField<int>(
-              decoration: InputDecoration(labelText: "Select Rack Number", border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: "Select Rack Number", border: OutlineInputBorder()),
               value: _selectedRackNumber,
               items: [1, 2, 3].map((int value) {
                 return DropdownMenuItem<int>(value: value, child: Text(value.toString()));
@@ -99,18 +99,18 @@ class _AddReminderDialogState extends State<AddReminderDialog> {
                 setState(() => _selectedRackNumber = newValue!);
               },
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             InkWell(
               onTap: () => _pickTime(context),
               child: InputDecorator(
-                decoration: InputDecoration(labelText: "Select Time", border: OutlineInputBorder()),
-                child: Text(_formatTime(_selectedTime), style: TextStyle(fontSize: 16)),
+                decoration: const InputDecoration(labelText: "Select Time", border: OutlineInputBorder()),
+                child: Text(_formatTime(_selectedTime), style: const TextStyle(fontSize: 16)),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _addReminder,
-              child: Text("Add Reminder"),
+              child: const Text("Add Reminder"),
             ),
           ],
         ),

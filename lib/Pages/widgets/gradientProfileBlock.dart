@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 
-import '../../services/notificationService.dart';
 
 class GradientProfileWidget extends StatelessWidget {
   const GradientProfileWidget({

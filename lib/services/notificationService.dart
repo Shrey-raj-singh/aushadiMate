@@ -4,7 +4,6 @@ import 'package:ausadhimate/main.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'dart:developer';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -73,14 +72,13 @@ class NotificationService {
         updateAlarm();
       });
 
-      
       print("Notification Scheduled at: $scheduledTime");
     } catch (e) {
       print("Error scheduling notification: $e");
     }
   }
 
-  static Future<void> showLocalNotification(String title,String body) async {
+  static Future<void> showLocalNotification(String title, String body) async {
     await _notificationsPlugin.show(
       0,
       title,
@@ -96,4 +94,10 @@ class NotificationService {
       ),
     );
   }
+
+  static Future<void> cancelNotification(int id) async {
+    await _notificationsPlugin.cancel(id);
+    print("Notification with ID $id canceled.");
+  }
+  
 }
